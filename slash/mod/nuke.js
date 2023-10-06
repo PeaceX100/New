@@ -5,37 +5,36 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('nuke')
     .setDescription('Nuke a channel'),
-
   async execute(interaction) {
-    const member = interaction.member;
-    const channel = interaction.channel;
-    const guild = interaction.guild;
-
-    if (!member.permissions.has('MANAGE_CHANNELS')) {
-      return interaction.reply({ content: "You don't have the necessary permissions to use this command.", ephemeral: true });
+    if (!interaction.guild.members.cache.get(interaction.client.user.id).permissions.has('MANAGE_CHANNELS')) {
+      return interaction.reply("I don't have the necessary permissions.");
     }
 
-    if (!channel.permissionsFor(member).has('MANAGE_CHANNELS')) {
-      return interaction.reply({ content: "You don't have the necessary permissions to use this command.", ephemeral: true });
+    if (!interaction.member.permissions.has('MANAGE_CHANNELS')) {
+      return interaction.reply("You don't have permission to use this command.");
     }
-    const executorTag = interaction.user.username;
+
     const nukeEmbed = new MessageEmbed({
-      description: `**Channel has been nuked By ${executorTag}**`,
+      description: `**Channel has been nuked By ${interaction.user.username}**`,
       image: {
         url: 'https://media.giphy.com/media/HhTXt43pk1I1W/giphy.gif',
       },
       footer: {
-        text: guild.name,
-        iconURL: guild.iconURL(),
+        text: interaction.guild.name,
+        iconURL: interaction.guild.iconURL(),
       },
       color: 'RANDOM',
     });
-    // Clone the channel
-    channel.clone().then((newChannel) => {
-      newChannel.setParent(channel.parent);
-      newChannel.setPosition(channel.position);
-      newChannel.send({ embeds: [nukeEmbed] });
-      channel.delete();
-    });
+
+    interaction.channel
+      .clone()
+      .then((newChannel) => {
+        newChannel.setParent(interaction.channel.parent);
+        newChannel.setPosition(interaction.channel.position);
+        interaction.channel.delete().then(() => {
+          newChannel.send({ embeds: [nukeEmbed] });
+        });
+      });
   },
 };
+            
